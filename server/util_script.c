@@ -271,7 +271,7 @@ AP_DECLARE(void) ap_add_common_vars(request_rec *r)
         apr_table_addn(e, "SCRIPT_FILENAME", r->filename);  /* Apache */
     }
 
-    rport = c->client_addr->port;
+    rport = (r->useragent_addr ? r->useragent_addr->port : 0);
     apr_table_addn(e, "REMOTE_PORT", apr_itoa(r->pool, rport));
 
     if (r->user) {
