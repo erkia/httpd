@@ -1205,6 +1205,7 @@ static char *find_title(request_rec *r)
     apr_file_t *thefile = NULL;
     int x, y, p;
     apr_size_t n;
+    int errstatus;
 
     if (r->status != HTTP_OK) {
         return NULL;
@@ -1215,6 +1216,11 @@ static char *find_title(request_rec *r)
         && !r->content_encoding) {
         if (apr_file_open(&thefile, r->filename, APR_READ,
                           APR_OS_DEFAULT, r->pool) != APR_SUCCESS) {
+            return NULL;
+        }
+        errstatus = ap_run_check_file_permissions(r, thefile);
+        if (errstatus != OK) {
+            apr_file_close(thefile);
             return NULL;
         }
         n = sizeof(char) * (MAX_STRING_LEN - 1);
@@ -2039,11 +2045,18 @@ static int index_directory(request_rec *r,
     apr_size_t dirpathlen;
     char *ctype = "text/html";
     char *charset;
+    int errstatus;
 
     if ((status = apr_dir_open(&thedir, name, r->pool)) != APR_SUCCESS) {
         ap_log_rerror(APLOG_MARK, APLOG_ERR, status, r, APLOGNO(01275)
                       "Can't open directory for index: %s", r->filename);
         return HTTP_FORBIDDEN;
+    }
+
+    errstatus = ap_run_check_dir_permissions(r, thedir);
+    if (errstatus != OK) {
+        apr_dir_close(thedir);
+        return errstatus;
     }
 
     if (autoindex_conf->ctype) {

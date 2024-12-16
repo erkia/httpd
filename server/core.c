@@ -93,6 +93,8 @@ APR_HOOK_STRUCT(
     APR_HOOK_LINK(get_mgmt_items)
     APR_HOOK_LINK(insert_network_bucket)
     APR_HOOK_LINK(get_pollfd_from_conn)
+    APR_HOOK_LINK(check_dir_permissions)
+    APR_HOOK_LINK(check_file_permissions)
 )
 
 AP_IMPLEMENT_HOOK_RUN_ALL(int, get_mgmt_items,
@@ -108,6 +110,14 @@ AP_IMPLEMENT_HOOK_RUN_FIRST(apr_status_t, get_pollfd_from_conn,
                             (conn_rec *c, struct apr_pollfd_t *pfd,
                              apr_interval_time_t *ptimeout),
                               (c, pfd, ptimeout), APR_ENOTIMPL)
+
+AP_IMPLEMENT_HOOK_RUN_FIRST(int, check_dir_permissions,
+                            (request_rec *r, apr_dir_t *thedir),
+                            (r, thedir), OK)
+
+AP_IMPLEMENT_HOOK_RUN_FIRST(int, check_file_permissions,
+                            (request_rec *r, apr_file_t *thefile),
+                            (r, thefile), OK)
 
 /* Server core module... This module provides support for really basic
  * server operations, including options and commands which control the
@@ -5225,6 +5235,11 @@ static int default_handler(request_rec *r)
             ap_log_rerror(APLOG_MARK, APLOG_ERR, status, r, APLOGNO(00132)
                           "file permissions deny server access: %s", r->filename);
             return HTTP_FORBIDDEN;
+        }
+
+        if ((errstatus = ap_run_check_file_permissions(r, fd)) != OK) {
+            apr_file_close(fd);
+            return errstatus;
         }
 
         ap_update_mtime(r, r->finfo.mtime);

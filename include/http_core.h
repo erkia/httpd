@@ -858,7 +858,32 @@ AP_DECLARE_DATA extern ap_filter_rec_t *ap_core_input_filter_handle;
 AP_DECLARE_HOOK(int, get_mgmt_items,
                 (apr_pool_t *p, const char * val, apr_hash_t *ht))
 
-/* ---------------------------------------------------------------------- */
+/* ----------------------------------------------------------------------
+ *
+ * Security extensions
+ */
+
+/**
+ * This hook provides a way for modules to implement additional security
+ * checks on opened directories
+ *
+ * @param r The request
+ * @param thedir Directory handle to check
+ * @ingroup hooks
+ */
+AP_DECLARE_HOOK(int, check_dir_permissions,
+                (request_rec *r, apr_dir_t *thedir))
+
+/**
+ * This hook provides a way for modules to implement additional security
+ * checks on opened files
+ *
+ * @param r The request
+ * @param thefile File handle to check
+ * @ingroup hooks
+ */
+AP_DECLARE_HOOK(int, check_file_permissions,
+                (request_rec *r, apr_file_t *thefile))
 
 /* ----------------------------------------------------------------------
  *
